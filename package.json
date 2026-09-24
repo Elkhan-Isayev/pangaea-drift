@@ -27,5 +27,8 @@
     "type": "git",
     "url": "https://github.com/Elkhan-Isayev/pangaea-drift.git"
   },
-  "author": "Elkhan Isayev"
+  "author": "Elkhan Isayev",
+  "engines": {
+    "node": ">=22.12"
+  }
 }
