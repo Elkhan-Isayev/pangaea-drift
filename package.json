@@ -1,0 +1,25 @@
+{
+  "name": "pangaea-drift",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Continental drift from Pangaea (250 Ma) to the present day, rendered in real time with WebGL from the Müller et al. (2019) plate model",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "data": ".venv/bin/python scripts/build_data.py"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  },
+  "homepage": "https://elkhan-isayev.github.io/pangaea-drift/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Elkhan-Isayev/pangaea-drift.git"
+  },
+  "author": "Elkhan Isayev"
+}
