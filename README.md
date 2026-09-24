@@ -7,6 +7,7 @@ Built on a real, peer-reviewed plate model, so the last frame is *exactly* today
 
 [![Live demo](https://img.shields.io/badge/▶_Live_demo-elkhan--isayev.github.io-2f7fd6?style=for-the-badge)](https://elkhan-isayev.github.io/pangaea-drift/)
 
+[![CI](https://github.com/Elkhan-Isayev/pangaea-drift/actions/workflows/deploy.yml/badge.svg)](https://github.com/Elkhan-Isayev/pangaea-drift/actions/workflows/deploy.yml)
 ![Three.js](https://img.shields.io/badge/Three.js-r186-000?logo=threedotjs&logoColor=white)
 ![WebGL 2](https://img.shields.io/badge/WebGL-2.0-990000?logo=webgl&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
@@ -60,9 +61,27 @@ npm run build        # production build into dist/
 npm run preview      # serve the build locally
 ```
 
-Every push to `main` is built and deployed to **GitHub Pages** by [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+Every push and pull request runs the test suites. Only when **all tests pass** does [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) build the site and deploy `main` to **GitHub Pages**.
 
 **Requirements:** a WebGL 2 browser (Chrome, Edge, Firefox, Safari 15+) and a discrete or Apple-silicon GPU for a smooth 60 fps. The *Quality* setting (Medium / High / Ultra) trades cube-map resolution and pixel ratio for speed. The app downloads about 50 MB of data on first load.
+
+## 🧪 Tests
+
+```bash
+npm test             # JavaScript unit tests (Vitest + jsdom)
+npm run test:py      # Python data-pipeline tests (pytest, needs .venv-gplates)
+npm run test:all     # both
+```
+
+| Suite | Covers |
+|---|---|
+| `tests/js/i18n` | all 4 languages complete (UI, events, periods, epochs, places), number formats, switching, persistence, DOM translation |
+| `tests/js/geo-timeline` | sea-level / temperature curves, contiguous time scale, events, playback speed |
+| `tests/js/reconstruction` | coordinate frames, quaternion interpolation, per-plate mesh building, real model: identity today, South Atlantic closes |
+| `tests/js/tectonics` | boundary record decoding, snapshot cross-fading, boundary data integrity, instanced layers |
+| `tests/js/data`, `labels` | asset loader (progress, errors), GPU texture formats, plate-riding labels and their visibility |
+| `tests/js/shaders` | GLSL regressions: reserved identifiers, balanced code, bound uniforms |
+| `tests/python/*` | GPlates `.rot` parser & hierarchy, rasterisation across the dateline, albedo in-painting, pygplates boundary extraction (Andean subduction polarity), Python↔JS binary contract, integrity of every file in `public/data` |
 
 ## 🎮 Controls
 
@@ -159,6 +178,7 @@ pangaea-drift/
 │   ├── rotations.py            # GPlates .rot parser + finite-rotation maths
 │   ├── regions.py              # hand-authored orogen regions
 │   └── check_reconstruction.py # quick-look palaeo-maps for validation
+├── tests/                      # js/ (Vitest) and python/ (pytest)
 ├── public/data/                # prebuilt assets (~50 MB)
 └── docs/                       # README media
 ```
@@ -169,7 +189,7 @@ The prebuilt assets in `public/data/` are committed, so this is only needed to c
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install numpy pillow scipy pyshp netCDF4
-python3.13 -m venv .venv-gplates && .venv-gplates/bin/pip install pygplates numpy scipy pillow   # pygplates needs Python ≤ 3.13
+python3.13 -m venv .venv-gplates && .venv-gplates/bin/pip install -r requirements-dev.txt   # pygplates needs Python ≤ 3.13
 ```
 
 Then put the raw sources into `raw/` (not committed; `etopo.nc` alone is above GitHub's 100 MB file limit):

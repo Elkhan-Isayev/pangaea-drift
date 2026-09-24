@@ -555,6 +555,14 @@
    "plate": 238
   }
  ],
+ "networks": {
+  "size": [
+   360,
+   180
+  ],
+  "slices": 63,
+  "step": 4
+ },
  "orogeny": {
   "size": [
    512,
@@ -566,13 +574,5 @@
  "boundaries": {
   "stride": 20,
   "count": 562446
- },
- "networks": {
-  "size": [
-   360,
-   180
-  ],
-  "slices": 63,
-  "step": 4
  }
 }

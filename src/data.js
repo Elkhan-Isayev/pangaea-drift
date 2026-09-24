@@ -45,10 +45,15 @@ export async function loadData(onProgress) {
     }
     loaded[key] = f.size;
     report();
-    const blob = new Blob(chunks);
-    if (f.type === 'json') return JSON.parse(await blob.text());
-    if (f.type === 'bin') return await blob.arrayBuffer();
-    return await createImageBitmap(blob, { colorSpaceConversion: 'none', premultiplyAlpha: 'none', imageOrientation: 'none' });
+    const bytes = new Uint8Array(got);
+    let o = 0;
+    for (const c of chunks) {
+      bytes.set(c, o);
+      o += c.length;
+    }
+    if (f.type === 'json') return JSON.parse(new TextDecoder().decode(bytes));
+    if (f.type === 'bin') return bytes.buffer;
+    return await createImageBitmap(new Blob([bytes]), { colorSpaceConversion: 'none', premultiplyAlpha: 'none', imageOrientation: 'none' });
   };
 
   const entries = await Promise.all(Object.entries(files).map(async ([k, f]) => [k, await fetchOne(k, f)]));

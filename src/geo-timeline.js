@@ -85,6 +85,13 @@ const TEMP = [
 ];
 
 export const seaLevelAt = (t) => interp(SEA_LEVEL, t);
+
+// Playback: advance time towards the present, slowing down near the end so the finale is readable.
+export const BASE_RATE = T_MAX / 90; // Ma per second at ×1 (full run ≈ 90 s)
+export function advanceTime(time, dt, speed = 1) {
+  const ease = 0.35 + 0.65 * Math.min(1, time / 40 + 0.15);
+  return Math.max(time - dt * BASE_RATE * speed * ease, 0);
+}
 export const tempAnomalyAt = (t) => interp(TEMP, t);
 
 export function periodAt(t) {

@@ -26,7 +26,7 @@ from scipy import ndimage
 
 from common import OUT, RAW, ROT_FILE, grid_lonlat, load_polygons, polygon_on_grid, rasterize_polygons
 from regions import OLD_OROGENS, YOUNG_OROGENS
-from rotations import RotationModel
+from rotations import RotationModel, qmul
 
 Image.MAX_IMAGE_PIXELS = None
 
@@ -103,8 +103,13 @@ def build_plates():
     table = np.zeros((len(times), P, 4), np.float32)
     for j, pid in enumerate(plate_ids):
         prev = None
+        # A few plates carry a small non-zero rotation at 0 Ma in the model; express all motion
+        # relative to the present-day position so that the last frame is exactly today's Earth.
+        q0 = rm.absolute(pid, 0.0)
+        q0_inv = np.array([q0[0], -q0[1], -q0[2], -q0[3]])
         for i, t in enumerate(times):
-            q = rm.absolute(pid, float(t))
+            q = qmul(rm.absolute(pid, float(t)), q0_inv)
+            q = q / np.linalg.norm(q)
             if prev is not None and np.dot(q, prev) < 0:
                 q = -q
             table[i, j] = q

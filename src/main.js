@@ -1,12 +1,11 @@
 import { createTextures, loadData } from './data.js';
-import { EVENTS, PERIODS, T_MAX, epochAt, eventAt, periodAt, seaLevelAt, tempAnomalyAt } from './geo-timeline.js';
+import { EVENTS, PERIODS, T_MAX, advanceTime, epochAt, eventAt, periodAt, seaLevelAt, tempAnomalyAt } from './geo-timeline.js';
 import { Labels } from './labels.js';
 import { LANGS, epochName, eventText, fmt, getLang, onLangChange, periodName, setLang, t, translateDom } from './i18n.js';
 import { PlateRotations, Reconstruction } from './reconstruction.js';
 import { PlanetScene } from './scene.js';
 
 const $ = (id) => document.getElementById(id);
-const BASE_RATE = T_MAX / 90; // Ma per second at ×1 (full run ≈ 90 s)
 
 const state = {
   time: T_MAX,
@@ -87,9 +86,7 @@ async function main() {
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
     if (state.playing && !state.scrubbing) {
-      // slow down slightly towards the present so the finale is readable
-      const ease = 0.35 + 0.65 * Math.min(1, state.time / 40 + 0.15);
-      setTime(state.time - dt * BASE_RATE * state.speed * ease);
+      setTime(advanceTime(state.time, dt, state.speed));
       if (state.time <= 0) setPlaying(false);
     }
     if (state.dirty) updateWorld(scene, recon);
@@ -305,6 +302,8 @@ function bindUI(scene, getRecon, rebuild, labels) {
     }
   });
   window.addEventListener('resize', () => scene.resize());
+  // OrbitControls cancels the default pointerdown, so a stale selection would never clear
+  $('scene').addEventListener('pointerdown', () => window.getSelection()?.removeAllRanges());
 
   // debugging / automation hook
   window.__drift = { state, setTime, setPlaying, scene, getRecon, labels, setView };

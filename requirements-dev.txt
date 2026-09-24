@@ -1,0 +1,8 @@
+# Data pipeline (scripts/) and its tests. pygplates needs Python <= 3.13.
+numpy
+scipy
+pillow
+pyshp
+netCDF4
+pygplates
+pytest

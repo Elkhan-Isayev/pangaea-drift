@@ -5,4 +5,8 @@ export default defineConfig({
   base: './',
   server: { open: true },
   build: { chunkSizeWarningLimit: 1200 },
+  test: {
+    environment: 'jsdom',
+    include: ['tests/js/**/*.test.js'],
+  },
 });

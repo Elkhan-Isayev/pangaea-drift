@@ -73,29 +73,50 @@ void main() {
 }
 `;
 
+// Decode boundaries.bin records (layout: scripts/build_tectonics.py BOUNDARY_DTYPE).
+export function parseBoundaries(buffer, stride) {
+  const n = buffer.byteLength / stride;
+  const dv = new DataView(buffer);
+  const pos = new Float32Array(n * 3);
+  const vel = new Float32Array(n * 3);
+  const nrm = new Float32Array(n * 3);
+  const rt = new Float32Array(n * 2);
+  for (let i = 0; i < n; i++) {
+    const o = i * stride;
+    for (let k = 0; k < 3; k++) {
+      pos[i * 3 + k] = dv.getInt16(o + 2 * k, true) / 32767;
+      vel[i * 3 + k] = dv.getInt16(o + 6 + 2 * k, true) / 1e5;
+      nrm[i * 3 + k] = dv.getInt8(o + 12 + k) / 127;
+    }
+    rt[i * 2] = dv.getUint8(o + 15);
+    rt[i * 2 + 1] = dv.getUint8(o + 16);
+  }
+  return { pos, vel, nrm, rt };
+}
+
+// Which two 1-Myr snapshots to show at `time`, how far to move each, and their weights.
+export function snapshotBlend(time, tMax) {
+  const older = Math.min(Math.ceil(time), tMax);
+  const newer = Math.max(older - 1, 0);
+  const f = older - time; // 0 at the older snapshot, 1 at the newer one
+  const single = older === newer;
+  return {
+    older,
+    newer,
+    olderDt: older - time,
+    newerDt: newer - time,
+    olderWeight: single ? 1 : 1 - f,
+    newerWeight: single ? 0 : f,
+  };
+}
+
 export class TectonicFeatures {
   constructor(renderer, raw, size = 1024) {
     this.renderer = renderer;
     const { index, tMax, stride } = raw.boundariesIndex;
     this.index = index;
     this.tMax = tMax;
-    const buf = raw.boundaries;
-    const n = buf.byteLength / stride;
-    const dv = new DataView(buf);
-    this.pos = new Float32Array(n * 3);
-    this.vel = new Float32Array(n * 3);
-    this.nrm = new Float32Array(n * 3);
-    this.rt = new Float32Array(n * 2);
-    for (let i = 0; i < n; i++) {
-      const o = i * stride;
-      for (let k = 0; k < 3; k++) {
-        this.pos[i * 3 + k] = dv.getInt16(o + 2 * k, true) / 32767;
-        this.vel[i * 3 + k] = dv.getInt16(o + 6 + 2 * k, true) / 1e5;
-        this.nrm[i * 3 + k] = dv.getInt8(o + 12 + k) / 127;
-      }
-      this.rt[i * 2] = dv.getUint8(o + 15);
-      this.rt[i * 2 + 1] = dv.getUint8(o + 16);
-    }
+    Object.assign(this, parseBoundaries(raw.boundaries, stride));
     const maxCount = Math.max(...index.map((e) => e[1]));
 
     this.target = new THREE.WebGLCubeRenderTarget(size, {
@@ -164,16 +185,14 @@ export class TectonicFeatures {
   }
 
   update(time) {
-    const older = Math.min(Math.ceil(time), this.tMax);
-    const newer = Math.max(older - 1, 0);
-    const f = older - time; // 0 at the older snapshot, 1 at the newer one
+    const s = snapshotBlend(time, this.tMax);
     const [a, b] = this.layers;
-    this.load(a, older);
-    this.load(b, newer);
-    a.mat.uniforms.uDt.value = older - time;
-    a.mat.uniforms.uWeight.value = older === newer ? 1 : 1 - f;
-    b.mat.uniforms.uDt.value = newer - time;
-    b.mat.uniforms.uWeight.value = older === newer ? 0 : f;
+    this.load(a, s.older);
+    this.load(b, s.newer);
+    a.mat.uniforms.uDt.value = s.olderDt;
+    a.mat.uniforms.uWeight.value = s.olderWeight;
+    b.mat.uniforms.uDt.value = s.newerDt;
+    b.mat.uniforms.uWeight.value = s.newerWeight;
 
     const r = this.renderer;
     const prevColor = r.getClearColor(new THREE.Color());

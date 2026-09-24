@@ -364,6 +364,9 @@ const EVENTS = {
   },
 };
 
+// Exposed for the completeness tests.
+export const DICTIONARIES = { UI, PERIODS, EPOCHS, PLACES, EVENTS };
+
 const STORAGE_KEY = 'pangaea-drift-lang';
 let current = LANGS[0].code;
 const listeners = new Set();

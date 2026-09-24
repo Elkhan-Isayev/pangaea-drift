@@ -6,7 +6,7 @@ import { TectonicFeatures } from './tectonics.js';
 // pairs. Boundary cells are emitted once per plate touching them; vertices are
 // duplicated per plate so every plate can rotate independently. The exact
 // boundary is resolved per fragment against the high-resolution plate raster.
-function buildPlateGeometry(pairs, mw, mh) {
+export function buildPlateGeometry(pairs, mw, mh) {
   const vw = mw + 1;
   const firstIdx = new Int32Array(vw * (mh + 1)).fill(-1);
   const firstPlate = new Int32Array(vw * (mh + 1));
