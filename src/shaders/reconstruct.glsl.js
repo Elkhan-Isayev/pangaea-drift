@@ -62,7 +62,7 @@ void main() {
 //   R: elevation (m, relative to today's sea-level datum)
 //   G: land flag at the current sea level (mip-mapped → continentality)
 //   B: covered by reconstructed crust (0 = synthetic ocean floor)
-//   A: continental crust flag
+//   A: rate of elevation change (m/Myr): mountain building, erosion, thermal subsidence
 // ---------------------------------------------------------------------------
 export const resolveVert = /* glsl */ `
 varying vec3 vPos;
@@ -75,8 +75,16 @@ void main() {
 export const resolveFrag = /* glsl */ `
 precision highp float;
 precision highp sampler2D;
+precision highp sampler3D;
 ${COMMON}
 uniform samplerCube tRecon;
+uniform samplerCube tFeat;   // active plate boundaries: ridges, trenches, arcs
+uniform sampler3D tOro;      // plate-boundary orogeny: R fraction of today's relief, G eroded extra relief
+uniform float uOroSlices;
+uniform float uOroStep;
+uniform sampler3D tNet;      // deforming networks in palaeo-coordinates: R inside, G 0.5 + shortening
+uniform float uNetSlices;
+uniform float uNetStep;
 uniform sampler2D tElev;
 uniform sampler2D tCrust;   // R birth age, G continental, B orogen onset
 uniform sampler2D tSurf;    // R lakes, G ice, B old orogen weight
@@ -85,6 +93,15 @@ uniform float uTime;
 uniform float uSeaLevel;
 uniform float uTexel;       // angular size of one cube texel (rad)
 varying vec3 vPos;
+
+// Mountain building driven by convergent plate boundaries (see scripts/build_tectonics.py).
+float orogenicRelief(float e0, vec2 uv, vec3 o, float time) {
+  vec2 oro = textureLod(tOro, vec3(uv, (time / uOroStep + 0.5) / uOroSlices), 0.0).rg;
+  float base = min(e0, 250.0);
+  float extra = oro.g * 255.0 * 20.0 * 0.6;
+  float r = ridged(o * 20.0, 4);
+  return base + (e0 - base) * oro.r + extra * (0.2 + r * r);
+}
 
 float abyss(vec3 dir) {
   return -5350.0 + 380.0 * fbm(dir * 7.0, 4) + 160.0 * snoise(dir * 40.0);
@@ -96,6 +113,8 @@ void main() {
   float covered = step(0.5, A.a);
   float cont = 0.0;
   float e;
+  float rate = 0.0;
+  vec4 F = textureLod(tFeat, dir, 0.0);
 
   if (covered > 0.5) {
     vec3 o = normalize(A.xyz);
@@ -109,9 +128,20 @@ void main() {
 
     // Oceanic lithosphere was younger and hotter at time t, hence shallower:
     // undo the thermal subsidence accumulated since then (ridges re-appear).
+    float oce = 1.0 - smoothstep(0.3, 0.7, cont);
     if (birth < 254.5) {
-      float oce = 1.0 - smoothstep(0.3, 0.7, cont);
       e += oce * (oceanDepth(birth) - oceanDepth(birth - uTime));
+      rate -= oce * (oceanDepth(birth - uTime + 1.0) - oceanDepth(birth - uTime));
+    }
+    // trenches and volcanic arcs of the time (today's already exist in the relief data)
+    e += oce * F.g * smoothstep(3.0, 15.0, uTime);
+
+    // Mountain belts rise while plates converge and wear down afterwards.
+    if (cont > 0.3) {
+      float now = orogenicRelief(e, uv, o, uTime);
+      float before = orogenicRelief(e, uv, o, uTime + 2.0);
+      rate += (now - before) * 0.5 * cont;
+      e = mix(e, now, cont);
     }
 
     // Young mountain belts: flattened before their onset, rising afterwards.
@@ -144,7 +174,7 @@ void main() {
     // blend towards the reconstructed neighbours, else a generic abyssal plain.
     vec3 t1 = normalize(cross(abs(dir.z) < 0.9 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0), dir));
     vec3 t2 = cross(dir, t1);
-    float acc = 0.0, wsum = 0.0, wall = 0.0;
+    float acc = 0.0, accRaw = 0.0, wsum = 0.0, wall = 0.0;
     for (int ring = 0; ring < 3; ring++) {
       float rad = uTexel * (ring == 0 ? 3.0 : (ring == 1 ? 10.0 : 28.0));
       float wr = ring == 0 ? 1.0 : (ring == 1 ? 0.6 : 0.3);
@@ -160,14 +190,36 @@ void main() {
           float birth = cr.r * 255.0;
           if (birth < 254.5) ne += (1.0 - cr.g) * (oceanDepth(birth) - oceanDepth(birth - uTime));
           acc += wr * min(ne, 400.0);
+          accRaw += wr * ne;
           wsum += wr;
         }
       }
     }
     float base = abyss(dir);
     e = wsum > 0.0 ? mix(base, acc / wsum, pow(clamp(wsum / wall * 1.5, 0.0, 1.0), 0.7)) : base;
+    // mid-ocean ridges, trenches and island arcs of the vanished oceans
+    float ridge = clamp(F.r, 0.0, 1.0);
+    e = max(e, -2500.0 - 2900.0 * (1.0 - ridge));
+    e += F.g;
+    rate = -15.0 - 140.0 * ridge;   // young crust near ridges subsides fastest
+
+    // Inside a deforming network the gap is continental crust that rigid plates cannot
+    // restore: shortened (Tibet-like plateau) or stretched (rift lowland / shallow sea).
+    vec2 nw = textureLod(tNet, vec3(dirToUV(dir), (uTime / uNetStep + 0.5) / uNetSlices), 0.0).rg;
+    float inNet = smoothstep(0.35, 0.65, nw.r);
+    if (inNet > 0.0) {
+      float comp = clamp((nw.g - 0.5) * 2.0, -1.0, 1.0);
+      float r = ridged(dir * 26.0, 5);
+      float land = comp > 0.0 ? 350.0 + 3600.0 * comp * (0.3 + 0.7 * r)
+                              : 150.0 - 450.0 * (-comp) + 180.0 * fbm(dir * 30.0, 4);
+      land += 220.0 * fbm(dir * 90.0, 3);
+      // stitch to the reconstructed crust around the gap (no cliffs at the seams)
+      if (wsum > 0.0) land = mix(land, accRaw / wsum, clamp(wsum / wall * 1.3, 0.0, 0.85));
+      e = mix(e, land, inNet);
+      rate = mix(rate, comp * 110.0, inNet);
+    }
   }
 
-  gl_FragColor = vec4(e, step(uSeaLevel, e), covered, cont);
+  gl_FragColor = vec4(e, step(uSeaLevel, e), covered, rate);
 }
 `;

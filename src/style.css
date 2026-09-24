@@ -167,7 +167,24 @@ kbd { font-family: var(--mono); font-size: 10.5px; padding: 1px 5px; border-radi
 .lang button:hover { color: #fff; }
 .lang button.on { background: rgba(127, 211, 255, 0.18); color: #fff; }
 
+/* ---------- tectonics legend ---------- */
+.legend {
+  position: fixed; left: 30px; bottom: 150px; z-index: 10; padding: 12px 14px; border-radius: 14px;
+  background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; transition: opacity 0.3s;
+}
+.lg-title { font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+.lg-row { display: flex; align-items: center; gap: 9px; }
+.legend .sw { width: 22px; height: 12px; border-radius: 3px; }
+.legend .sw.up { background: linear-gradient(90deg, rgba(255, 60, 20, 0.35), #ff3a14); }
+.legend .sw.down { background: linear-gradient(90deg, rgba(30, 110, 255, 0.35), #1e6eff); }
+.legend .ln { width: 22px; height: 3px; border-radius: 2px; }
+.legend .ln.sub { background: #ff5a2a; box-shadow: 0 0 6px #ff5a2a; }
+.legend .ln.ridge { background: #ffd95a; box-shadow: 0 0 6px #ffd95a; }
+body.map-mode .legend { bottom: 150px; }
+
 @media (max-width: 760px) {
+  .legend { left: 10px; bottom: 170px; font-size: 11px; }
   .lang { top: 14px; left: 14px; transform: none; padding: 3px; }
   .lang button { padding: 6px 7px; font-size: 11px; }
   #hud { top: 64px; left: 16px; }

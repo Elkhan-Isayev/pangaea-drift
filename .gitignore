@@ -4,3 +4,4 @@ dist
 raw
 .DS_Store
 __pycache__
+.venv-gplates

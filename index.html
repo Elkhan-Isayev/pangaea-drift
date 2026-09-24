@@ -65,10 +65,11 @@
           <button data-v="globe" class="on" data-i18n="globe">Globe</button>
           <button data-v="map" data-i18n="map">Map</button>
         </div>
-        <label class="tg"><input type="checkbox" id="opt-clouds" checked /><span data-i18n="clouds">Clouds</span></label>
-        <label class="tg"><input type="checkbox" id="opt-atmo" checked /><span data-i18n="atmosphere">Atmosphere</span></label>
-        <label class="tg"><input type="checkbox" id="opt-labels" checked /><span data-i18n="labels">Labels</span></label>
+        <label class="tg"><input type="checkbox" id="opt-clouds" /><span data-i18n="clouds">Clouds</span></label>
+        <label class="tg"><input type="checkbox" id="opt-atmo" /><span data-i18n="atmosphere">Atmosphere</span></label>
+        <label class="tg"><input type="checkbox" id="opt-labels" /><span data-i18n="labels">Labels</span></label>
         <label class="tg"><input type="checkbox" id="opt-night" /><span data-i18n="night">Day &amp; night (city lights)</span></label>
+        <label class="tg"><input type="checkbox" id="opt-tectonics" /><span data-i18n="tectonics">Tectonics (uplift / subsidence)</span></label>
         <label class="tg"><input type="checkbox" id="opt-bounds" /><span data-i18n="bounds">Plate boundaries</span></label>
         <label class="tg"><input type="checkbox" id="opt-coast" /><span data-i18n="coast">Present-day coastlines</span></label>
         <label class="tg"><input type="checkbox" id="opt-grid" /><span data-i18n="grid">Coordinate grid</span></label>
@@ -89,6 +90,15 @@
         <p class="keys" data-i18n-html="keys"></p>
         <p class="credits" data-i18n-html="credits"></p>
       </div>
+    </div>
+
+    <!-- tectonics legend -->
+    <div id="legend" class="legend hidden">
+      <div class="lg-title" data-i18n="tectonicsTitle">Tectonics</div>
+      <div class="lg-row"><i class="sw up"></i><span data-i18n="lgUp">rising: mountain building</span></div>
+      <div class="lg-row"><i class="sw down"></i><span data-i18n="lgDown">sinking: cooling seafloor, erosion</span></div>
+      <div class="lg-row"><i class="ln sub"></i><span data-i18n="lgSub">subduction zone / collision</span></div>
+      <div class="lg-row"><i class="ln ridge"></i><span data-i18n="lgRidge">mid-ocean ridge / transform</span></div>
     </div>
 
     <!-- timeline -->

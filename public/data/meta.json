@@ -423,6 +423,7 @@
  ],
  "labels": [
   {
+   "id": "na",
    "lat": 45,
    "lon": -100,
    "kind": "continent",
@@ -430,10 +431,10 @@
     0,
     250
    ],
-   "plate": 0,
-   "id": "na"
+   "plate": 0
   },
   {
+   "id": "sa",
    "lat": -12,
    "lon": -58,
    "kind": "continent",
@@ -441,10 +442,10 @@
     0,
     250
    ],
-   "plate": 21,
-   "id": "sa"
+   "plate": 21
   },
   {
+   "id": "af",
    "lat": 5,
    "lon": 20,
    "kind": "continent",
@@ -452,10 +453,10 @@
     0,
     250
    ],
-   "plate": 174,
-   "id": "af"
+   "plate": 174
   },
   {
+   "id": "eu",
    "lat": 51,
    "lon": 15,
    "kind": "continent",
@@ -463,10 +464,10 @@
     0,
     250
    ],
-   "plate": 61,
-   "id": "eu"
+   "plate": 61
   },
   {
+   "id": "as",
    "lat": 55,
    "lon": 95,
    "kind": "continent",
@@ -474,10 +475,10 @@
     0,
     250
    ],
-   "plate": 63,
-   "id": "as"
+   "plate": 63
   },
   {
+   "id": "in",
    "lat": 21,
    "lon": 78,
    "kind": "continent",
@@ -485,10 +486,10 @@
     0,
     250
    ],
-   "plate": 84,
-   "id": "in"
+   "plate": 84
   },
   {
+   "id": "au",
    "lat": -25,
    "lon": 134,
    "kind": "continent",
@@ -496,10 +497,10 @@
     0,
     250
    ],
-   "plate": 198,
-   "id": "au"
+   "plate": 198
   },
   {
+   "id": "an",
    "lat": -80,
    "lon": 40,
    "kind": "continent",
@@ -507,10 +508,10 @@
     0,
     250
    ],
-   "plate": 199,
-   "id": "an"
+   "plate": 199
   },
   {
+   "id": "gl",
    "lat": 73,
    "lon": -41,
    "kind": "region",
@@ -518,10 +519,10 @@
     0,
     250
    ],
-   "plate": 1,
-   "id": "gl"
+   "plate": 1
   },
   {
+   "id": "ar",
    "lat": 23,
    "lon": 45,
    "kind": "region",
@@ -529,10 +530,10 @@
     0,
     250
    ],
-   "plate": 86,
-   "id": "ar"
+   "plate": 86
   },
   {
+   "id": "mg",
    "lat": -19.5,
    "lon": 46.6,
    "kind": "region",
@@ -540,10 +541,10 @@
     0,
     250
    ],
-   "plate": 175,
-   "id": "mg"
+   "plate": 175
   },
   {
+   "id": "zl",
    "lat": -43,
    "lon": 171,
    "kind": "region",
@@ -551,8 +552,27 @@
     0,
     250
    ],
-   "plate": 238,
-   "id": "zl"
+   "plate": 238
   }
- ]
+ ],
+ "orogeny": {
+  "size": [
+   512,
+   256
+  ],
+  "slices": 26,
+  "step": 10
+ },
+ "boundaries": {
+  "stride": 20,
+  "count": 562446
+ },
+ "networks": {
+  "size": [
+   360,
+   180
+  ],
+  "slices": 63,
+  "step": 4
+ }
 }

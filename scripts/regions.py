@@ -1,10 +1,10 @@
 """
 Hand-authored tectonic regions in present-day lon/lat (degrees).
 
-YOUNG_OROGENS: mountain belts / plateaus that were uplifted after the given onset age.
-Before the onset they are flattened to `residual` metres; after it they rise
-progressively to today's relief.  The Western Interior region lets the
-Cretaceous sea-level highstand flood North America (Western Interior Seaway).
+YOUNG_OROGENS: regions lowered before the given onset age (flattened to `residual`
+metres, rising progressively afterwards). Mountain building itself now comes from the
+plate-boundary model in build_tectonics.py; only the Western Interior (dynamic
+topography) remains here, so the Cretaceous highstand floods the Western Interior Seaway.
 
 OLD_OROGENS: Late-Palaeozoic belts that formed the Central Pangean Mountains
 (Appalachians, Mauritanides, Variscides, Urals ...).  They were Himalaya-scale at
@@ -13,39 +13,11 @@ the start of the simulation and erode away through the Mesozoic.
 
 YOUNG_OROGENS = [
     # name, onset (Ma), residual height (m), polygon
-    ("Himalaya-Tibet", 50, 400, [(70, 27), (73, 34), (75, 37), (80, 39.5), (90, 38.5), (97, 37), (103, 34), (104, 30), (100, 26),
-                                 (97, 24.5), (92, 26), (86, 26.3), (80, 28.3), (74, 31)]),
-    ("Pamir-Tian Shan", 25, 500, [(66, 37), (69, 40), (72, 43.5), (80, 45), (88, 44.5), (95, 43.5), (96, 41), (88, 41.5), (80, 40),
-                                  (75, 38), (72, 36.5)]),
-    ("Altai-Sayan", 20, 500, [(82, 48), (86, 52.5), (95, 53.5), (101, 52), (99, 47), (93, 45), (86, 46)]),
-    ("Alps", 35, 300, [(5, 43.5), (6, 46.8), (9, 47.9), (13, 48), (16.5, 47.7), (15.5, 46), (12, 45.7), (8, 44.3)]),
-    ("Carpathians", 20, 300, [(17, 48.4), (19, 49.8), (23, 49.5), (26, 47.8), (27, 45.4), (22, 44.3), (22.5, 45.8), (24.5, 46.5),
-                              (21, 48.2)]),
-    ("Pyrenees", 45, 300, [(-2.5, 42.4), (-1.8, 43.4), (3.3, 42.8), (2.5, 42.1)]),
-    ("Dinarides-Hellenides", 30, 300, [(13.5, 45.5), (16, 45.8), (20.5, 43), (22.5, 41), (23, 37.5), (21, 37.2), (19.5, 40),
-                                       (15.5, 43.5)]),
-    ("Caucasus", 20, 300, [(37, 44.5), (40, 44.3), (45, 43.2), (49.5, 41.3), (48.5, 40.3), (44, 41.5), (40, 42.3), (37, 43.5)]),
-    ("Anatolia-Iran-Zagros", 25, 400, [(26, 37), (28.5, 40.5), (35, 41.5), (42, 41.3), (48, 38.5), (56, 38.2), (61, 37), (63, 33),
-                                       (61, 27.5), (57, 26), (53, 27.5), (48, 30.2), (45.5, 33), (40.5, 36.8), (35, 36.3),
-                                       (31, 36.5)]),
-    ("Hindu Kush-Afghanistan", 25, 500, [(61, 30), (61, 36), (66, 37.5), (71, 37), (71.5, 34), (69, 30), (66, 29)]),
-    ("Atlas", 25, 500, [(-10, 29.5), (-6, 33.2), (-1, 35), (4, 36.8), (10, 37.2), (10, 35), (3, 33.8), (-2.5, 31.5), (-8, 29.3)]),
-    ("Andes", 30, 800, [(-78, 11), (-80, 7), (-81, 0), (-80.5, -5), (-78.5, -10), (-76, -14), (-71, -18.5), (-70.8, -25),
-                        (-71.8, -33), (-73.8, -42), (-75.5, -48), (-75.5, -54), (-68, -55.3), (-69.5, -50), (-70.5, -42),
-                        (-68.5, -33), (-65, -27), (-63.8, -21), (-64.2, -17), (-68.5, -13.5), (-74, -6), (-73.2, 0),
-                        (-72, 5), (-70.5, 10), (-72.5, 11.5)]),
-    ("Cordillera", 60, 400, [(-127, 60), (-118, 58), (-114, 51), (-106, 45), (-104.5, 40), (-104.5, 33), (-106.5, 27), (-104, 20),
-                             (-97, 18.5), (-98, 16), (-105, 19.5), (-110, 25), (-114, 31), (-120, 35), (-124, 40), (-124.5, 47),
-                             (-131, 55), (-141, 60)]),
+    # Mountain belts are now driven by the plate-boundary model (scripts/build_tectonics.py).
+    # Only dynamic topography that the plate model does not describe stays hand-authored:
     ("Western Interior", 70, 30, [(-121, 68), (-104, 69), (-100, 62), (-96, 55), (-94.5, 47), (-95, 38), (-94, 30.5), (-97.5, 26.5),
                                   (-100.5, 28.5), (-104, 33.5), (-104.6, 40), (-106, 45), (-113.5, 51.5), (-117.5, 57.5),
                                   (-122.5, 62.5)]),
-    ("Alaska Range", 20, 300, [(-156, 60), (-150, 63.6), (-141, 63), (-136, 60.5), (-141, 59.7), (-150, 59.2)]),
-    ("Ethiopian Highlands", 30, 500, [(35, 14.8), (39.5, 15), (41, 10.5), (43, 9.2), (40, 4), (38.5, -2.5), (36.5, -8), (30, -8),
-                                      (29.2, -1), (32.5, 3.5), (35, 8.5)]),
-    ("New Guinea", 10, 200, [(134.5, -2.8), (141, -2.2), (147.5, -5.5), (150.5, -6.8), (146, -8.3), (140, -6.5), (135, -4.6)]),
-    ("Taiwan", 5, 100, [(120.4, 22), (120, 23.5), (121.3, 25.3), (122, 25), (121, 22)]),
-    ("Southern Alps NZ", 5, 200, [(166.5, -46), (169.5, -43.5), (172.5, -41.5), (174.5, -41.8), (171, -44.8), (168, -46.5)]),
 ]
 
 OLD_OROGENS = [

@@ -24,7 +24,8 @@ Built on a real, peer-reviewed plate model, so the last frame is *exactly* today
 - **Real science, not keyframes.** Every one of 399 tectonic plates moves along its own Euler-pole path from the [Müller et al. (2019)](https://doi.org/10.1029/2018TC005462) global plate model, the same data GPlates uses. The motion is continuous at any time step.
 - **Ends on the real Earth.** At 0 Ma nothing is rotated, so you see true present-day relief (Everest, the Mariana Trench), NASA Blue Marble colours, ice sheets, Arctic sea ice and, on the night side, city lights.
 - **Oceans that are born and die.** Seafloor younger than the current age is removed using the global ocean-age grid, so the Atlantic visibly *unzips* through time. Mid-ocean ridges appear where they were, thanks to a lithospheric cooling model.
-- **Growing and dying mountains.** The Himalayas rise after India hits Asia, the Alps and the Andes follow, and the Himalaya-scale Central Pangean Mountains erode away.
+- **Mountains built by real plate collisions.** Mountain building is driven by the model's resolved plate boundaries: subduction zones and crustal shortening inside its deforming networks. The Himalayas rise after India hits Asia, the Andes shoot up late, Mesozoic arcs erode away, and trenches, volcanic island arcs and mid-ocean ridges appear in the vanished oceans.
+- **Tectonics mode.** Colours the planet by rate of uplift (red) and subsidence (blue) and draws active subduction zones and ridges for any moment in time.
 - **Changing climate.** Sea level floods the continents in the Cretaceous (hello, Western Interior Seaway). Red Triassic deserts give way to forests, Antarctica freezes at 34 Ma and Greenland at ~3 Ma.
 - **Cinematic rendering.** Ray-marched Rayleigh/Mie atmosphere, procedural weather-like clouds with shadows, GGX sun glint on the ocean, relief shading, bloom and ACES tone mapping.
 - **Globe and flat map.** Switch between an orbitable globe and an equirectangular map, with optional plate boundaries, present-day coastlines and a coordinate grid.
@@ -75,7 +76,7 @@ Every push to `main` is built and deployed to **GitHub Pages** by [`.github/work
 | Timeline | scrub through time; the ◆ markers jump to key events |
 | `EN · AZ · DE · RU` | interface language (also `?lang=az` etc.) |
 
-The settings panel toggles clouds, atmosphere, labels, day & night (city lights), plate boundaries, present-day coastlines, the coordinate grid and auto-rotation, and adjusts relief exaggeration and rendering quality.
+The settings panel toggles clouds, atmosphere, labels, day & night (city lights), the tectonics mode, plate boundaries, present-day coastlines, the coordinate grid and auto-rotation, and adjusts relief exaggeration and rendering quality.
 
 ## 🔬 How it works
 
@@ -86,11 +87,15 @@ flowchart LR
     B[ETOPO1 relief<br/>& bathymetry] --> P
     C[Seafloor age grid] --> P
     D[NASA Blue / Black Marble] --> P
-    P --> E[(public/data<br/>quaternions · plate ids ·<br/>elevation · crust · albedo)]
+    A --> T[build_tectonics.py<br/>pygplates: resolved topologies]
+    P --> E[(public/data<br/>quaternions · plate ids ·<br/>elevation · crust · albedo ·<br/>boundaries · orogeny)]
+    T --> E
   end
   subgraph GPU["Every frame · WebGL 2"]
     E --> F["Pass A · rigid plates<br/>rotate each plate → cube map<br/>of original directions"]
+    E --> K["Plate boundaries<br/>trenches · arcs · ridges → cube map"]
     F --> G["Pass B · palaeo-topography<br/>seafloor cooling · orogeny ·<br/>ice sheets · gap filling"]
+    K --> G
     G --> H["Surface shading<br/>palaeo-biomes · ocean · ice ·<br/>clouds · atmosphere"]
   end
 ```
@@ -111,7 +116,17 @@ A second cube pass turns those directions into elevation at time *t*:
 
   $$\text{uplift} = d(a_{\text{now}}) - d(a_{\text{now}}-t)$$
 
-- **Young orogens** (Himalaya-Tibet, Alps, Andes, Cordillera, Zagros, …) are flattened before their onset age and rise progressively afterwards. Lowering the Great Plains lets the Cretaceous sea create the Western Interior Seaway.
+- **Mountain building from plate boundaries.** [`scripts/build_tectonics.py`](scripts/build_tectonics.py) resolves the model's topologies with [pygplates](https://www.gplates.org/docs/pygplates/) for every million years. Each continental point is reconstructed to its palaeo-position and collects orogenic activity from two sources:
+  - convergent boundaries: an arc and back-arc profile on the overriding plate, scaled by the convergence rate;
+  - crustal shortening inside deforming networks: the dilatation rate, converted to uplift by Airy isostasy.
+
+  Relief then follows the activity with erosional decay:
+
+  $$H(t-1)=H(t)\,e^{-1/\tau}+A(t),\qquad \tau = 45\ \text{Myr}$$
+
+  The result is stored as a 3D texture (the fraction of today's relief plus the relief of ranges that have since eroded). The Himalayas are flat before ~50 Ma, the Andes rise mostly in the last 30 Myr, and Mesozoic arcs along Asia wear down.
+- **Active boundaries** (subduction polarity, ridges, transforms) are splatted into a cube map every frame and move with their own velocities between snapshots. They carve trenches, raise volcanic island arcs and build the mid-ocean ridges of Panthalassa and Tethys. Where rigid plates leave a gap inside a **deforming network** (e.g. the crust that became Tibet), it is filled with continental crust: a plateau under shortening, a rift lowland under extension.
+- **Western Interior** of North America is lowered before ~70 Ma (dynamic topography), so the Cretaceous sea creates the Western Interior Seaway.
 - **Old orogens** (Appalachians, Mauritanides, Variscides, Urals, Cape Fold Belt) are restored to Himalayan heights with ridged noise and erode through the Mesozoic.
 - **Ice sheets** grow following the glaciation history (Antarctica at the Eocene–Oligocene boundary, Greenland at ~3 Ma). Without ice, the bedrock is lower.
 - **Subducted oceans** (Panthalassa, Tethys) have no present-day remnant; they are synthesised as abyssal plains blended with their reconstructed neighbours.
@@ -134,11 +149,13 @@ pangaea-drift/
 │   ├── reconstruction.js       # per-plate mesh, cube-map passes, CPU rotations
 │   ├── scene.js                # renderer, globe, map, atmosphere, stars, post-processing
 │   ├── clouds.js               # baked cloud cube map
+│   ├── tectonics.js            # active plate boundaries → trenches, arcs, ridges
 │   ├── labels.js               # labels riding on plates + palaeo-ocean names
 │   ├── data.js                 # asset loading with progress
 │   └── shaders/                # GLSL: reconstruction, surface, clouds, atmosphere
 ├── scripts/                    # Python data pipeline
 │   ├── build_data.py           # builds everything in public/data
+│   ├── build_tectonics.py      # pygplates: plate boundaries, orogeny, deforming networks
 │   ├── rotations.py            # GPlates .rot parser + finite-rotation maths
 │   ├── regions.py              # hand-authored orogen regions
 │   └── check_reconstruction.py # quick-look palaeo-maps for validation
@@ -152,6 +169,7 @@ The prebuilt assets in `public/data/` are committed, so this is only needed to c
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install numpy pillow scipy pyshp netCDF4
+python3.13 -m venv .venv-gplates && .venv-gplates/bin/pip install pygplates numpy scipy pillow   # pygplates needs Python ≤ 3.13
 ```
 
 Then put the raw sources into `raw/` (not committed; `etopo.nc` alone is above GitHub's 100 MB file limit):
@@ -165,7 +183,7 @@ Then put the raw sources into `raw/` (not committed; `etopo.nc` alone is above G
 | `raw/black_marble.jpg` | [NASA Black Marble 2016](https://earthobservatory.nasa.gov/features/NightLights) |
 
 ```bash
-npm run data                                             # regenerates public/data (~20 s)
+npm run data                                             # regenerates public/data (~1.5 min)
 .venv/bin/python scripts/check_reconstruction.py out/    # optional: palaeo-map sanity check
 ```
 
@@ -174,7 +192,7 @@ npm run data                                             # regenerates public/da
 This is a scientifically grounded visualisation, not a research tool.
 
 - Plates move **rigidly**. The deforming networks of the model (rift margins, orogens) are approximated through elevation changes, so small gaps or overlaps can appear along plate edges.
-- Orogen timing and regions, the palaeo-climate and the palaeo-biomes are simplified models, not reconstructions from specific studies.
+- Mountain heights come from a simple activity → uplift model calibrated by eye; the timing follows the plate model, but absolute heights in the past are indicative. The palaeo-climate and palaeo-biomes are simplified models, not reconstructions from specific studies.
 - Clouds are plausible procedural weather, not historical data.
 
 ## 📚 Data & credits
@@ -182,6 +200,7 @@ This is a scientifically grounded visualisation, not a research tool.
 | Data | Reference | License |
 |---|---|---|
 | Plate model, static polygons, ocean-age grid | Müller, R. D., et al. (2019). *A global plate model including lithospheric deformation along major rifts and orogens since the Triassic.* **Tectonics**, 38, 1884–1907. [doi:10.1029/2018TC005462](https://doi.org/10.1029/2018TC005462) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) (EarthByte) |
+| Plate-boundary topologies | resolved with [pygplates](https://www.gplates.org) (GPlates) | GPL-2.0 (library, build time only) |
 | ETOPO1 global relief | Amante, C. & Eakins, B. W. (2009). NOAA Technical Memorandum NESDIS NGDC-24. [doi:10.7289/V5C8276M](https://doi.org/10.7289/V5C8276M) | Public domain (NOAA) |
 | Blue Marble Next Generation | Stöckli, R., et al. (2005). NASA Earth Observatory | NASA imagery, free to use with credit |
 | Black Marble 2016 | NASA Earth Observatory / Suomi NPP VIIRS | NASA imagery, free to use with credit |

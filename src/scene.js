@@ -67,6 +67,7 @@ export class PlanetScene {
     this.uniforms.tRecon.value = recon.targetA.texture;
     this.uniforms.tElevT.value = recon.targetB.texture;
     this.uniforms.uTexel.value = recon.texelAngle;
+    this.uniforms.tFeat.value = recon.features.texture;
   }
 
   init(tex, recon) {
@@ -95,6 +96,8 @@ export class PlanetScene {
       uCamGeo: { value: new THREE.Vector3(3, 0, 0) },
       uExposure: { value: EXPOSURE },
       tClouds: { value: null },
+      tFeat: { value: recon.features.texture },
+      uShowTectonics: { value: 0 },
     };
     this.uniforms = common;
     this.cloudLayer = new CloudLayer(this.renderer, common.tElevT);

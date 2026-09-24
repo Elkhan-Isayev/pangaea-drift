@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { plateFrag, plateVert, resolveFrag, resolveVert } from './shaders/reconstruct.glsl.js';
+import { TectonicFeatures } from './tectonics.js';
 
 // Builds a per-plate tessellation of the present-day globe from (cell, plate)
 // pairs. Boundary cells are emitted once per plate touching them; vertices are
@@ -92,6 +93,9 @@ export class Reconstruction {
     this.sceneA.add(mesh);
     this.camA = new THREE.CubeCamera(0.05, 10, this.targetA);
 
+    // ---- active plate boundaries (ridges, trenches, arcs)
+    this.features = new TectonicFeatures(renderer, raw, size >= 1536 ? 1024 : 768);
+
     // ---- pass B: palaeo-topography
     this.targetB = new THREE.WebGLCubeRenderTarget(size, {
       type: THREE.HalfFloatType,
@@ -109,6 +113,13 @@ export class Reconstruction {
       depthWrite: false,
       uniforms: {
         tRecon: { value: this.targetA.texture },
+        tFeat: { value: this.features.texture },
+        tOro: { value: tex.orogeny },
+        uOroSlices: { value: raw.meta.orogeny.slices },
+        uOroStep: { value: raw.meta.orogeny.step },
+        tNet: { value: tex.networks },
+        uNetSlices: { value: raw.meta.networks.slices },
+        uNetStep: { value: raw.meta.networks.step },
         tElev: { value: tex.elev },
         tCrust: { value: tex.crust },
         tSurf: { value: tex.surface },
@@ -140,6 +151,8 @@ export class Reconstruction {
     this.matA.uniforms.uTimeIdx.value = Math.min(time / this.meta.tStep, this.meta.times - 1);
     this.camA.update(r, this.sceneA);
 
+    this.features.update(time);
+
     this.matB.uniforms.uTime.value = time;
     this.matB.uniforms.uSeaLevel.value = seaLevel;
     this.camB.update(r, this.sceneB);
@@ -151,6 +164,7 @@ export class Reconstruction {
   dispose() {
     this.targetA.dispose();
     this.targetB.dispose();
+    this.features.dispose();
   }
 }
 

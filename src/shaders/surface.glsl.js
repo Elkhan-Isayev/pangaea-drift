@@ -44,6 +44,8 @@ const SURFACE_UNIFORMS = /* glsl */ `
 uniform samplerCube tRecon;   // original directions (pass A)
 uniform samplerCube tElevT;   // palaeo-topography (pass B, mip-mapped)
 uniform samplerCube tClouds;  // baked cloud density
+uniform samplerCube tFeat;    // active plate boundaries
+uniform float uShowTectonics;
 uniform sampler2D tAlbedo;
 uniform sampler2D tSurf;
 uniform sampler2D tLights;
@@ -289,6 +291,21 @@ void main() {
     float fb = fwidth(A.a);
     float bnd = clamp((fb - 0.05) * 3.0, 0.0, 1.0);
     col = mix(col, vec3(1.0, 0.36, 0.12) * 1.6, bnd * 0.85 * uShowBoundaries);
+  }
+  if (uShowTectonics > 0.0) {
+    // red = rising (mountain building), blue = sinking (cooling seafloor, eroding ranges)
+    float rate = B.a;
+    float up = smoothstep(3.0, 80.0, rate);
+    float down = smoothstep(3.0, 110.0, -rate);
+    vec3 lum = vec3(dot(col, vec3(0.3, 0.59, 0.11)));
+    vec3 base = mix(col, lum, 0.55 * uShowTectonics);
+    base = mix(base, vec3(1.0, 0.22, 0.08) * (0.5 + 0.9 * up), up * 0.8 * uShowTectonics);
+    base = mix(base, vec3(0.12, 0.42, 1.0) * (0.35 + 0.6 * down), down * 0.7 * uShowTectonics);
+    vec4 F = textureLod(tFeat, d, 0.0);
+    float aa = 1.0 + 60.0 * fwidth(d.x + d.y + d.z);
+    base = mix(base, vec3(1.0, 0.3, 0.12) * 2.2, clamp(F.b * 1.6 * aa, 0.0, 1.0) * uShowTectonics);
+    base = mix(base, vec3(1.0, 0.86, 0.3) * 2.0, clamp(F.a * 1.6 * aa, 0.0, 1.0) * uShowTectonics);
+    col = base;
   }
   if (uShowCoast > 0.0) {
     float en = texture(tElevNow, dirToUV(d)).r;

@@ -79,6 +79,7 @@ async function main() {
   $('loader').style.opacity = 0;
   setTimeout(() => $('loader').remove(), 1000);
   for (const id of ['hud', 'event', 'settings', 'timeline-wrap']) $(id).classList.remove('hidden');
+  applyOptions(scene);
   setTimeout(() => setPlaying(true), 1800);
 
   let last = performance.now();
@@ -235,6 +236,8 @@ function applyOptions(scene) {
   scene.cloudsEnabled = options.clouds;
   scene.atmo.visible = options.atmo;
   u.uShowBoundaries.value = options.bounds ? 1 : 0;
+  u.uShowTectonics.value = options.tectonics ? 1 : 0;
+  $('legend').classList.toggle('hidden', !options.tectonics);
   u.uShowCoast.value = options.coast ? 1 : 0;
   u.uShowGrid.value = options.grid ? 1 : 0;
   u.uNight.value = options.night ? 1 : 0;
@@ -252,6 +255,7 @@ function bindUI(scene, getRecon, rebuild, labels) {
     options.labels = $('opt-labels').checked;
     options.night = $('opt-night').checked;
     options.bounds = $('opt-bounds').checked;
+    options.tectonics = $('opt-tectonics').checked;
     options.coast = $('opt-coast').checked;
     options.grid = $('opt-grid').checked;
     options.rotate = $('opt-rotate').checked;

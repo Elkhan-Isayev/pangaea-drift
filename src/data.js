@@ -16,6 +16,10 @@ export async function loadData(onProgress) {
     tect: { url: 'tect.png', type: 'img', size: 0.18e6 },
     albedo: { url: 'albedo.jpg', type: 'img', size: 3.5e6 },
     lights: { url: 'lights.jpg', type: 'img', size: 0.53e6 },
+    orogeny: { url: 'orogeny.bin', type: 'bin', size: 6.8e6 },
+    boundaries: { url: 'boundaries.bin', type: 'bin', size: 11.2e6 },
+    boundariesIndex: { url: 'boundaries.json', type: 'json', size: 7e3 },
+    networks: { url: 'networks.bin', type: 'bin', size: 8.2e6 },
   };
   const loaded = {};
   const total = Object.values(files).reduce((s, f) => s + f.size, 0);
@@ -81,8 +85,25 @@ export function createTextures(raw) {
   const plateid = imageTexture(raw.plateid, { mipmaps: false });
   plateid.minFilter = plateid.magFilter = THREE.NearestFilter;
 
+  // Time series as 3D textures ([slices][H][W] RG8, time is the third axis):
+  // plate-boundary orogeny (present-day grid) and deforming networks (palaeo grid).
+  const volume = (buf, [w, h], slices) => {
+    const t = new THREE.Data3DTexture(new Uint8Array(buf), w, h, slices);
+    t.format = THREE.RGFormat;
+    t.type = THREE.UnsignedByteType;
+    t.minFilter = t.magFilter = THREE.LinearFilter;
+    t.wrapS = THREE.RepeatWrapping;
+    t.unpackAlignment = 1;
+    t.needsUpdate = true;
+    return t;
+  };
+  const orogeny = volume(raw.orogeny, meta.orogeny.size, meta.orogeny.slices);
+  const networks = volume(raw.networks, meta.networks.size, meta.networks.slices);
+
   return {
     elev,
+    orogeny,
+    networks,
     plateid,
     rot,
     crust: imageTexture(raw.crust, { mipmaps: false }),
